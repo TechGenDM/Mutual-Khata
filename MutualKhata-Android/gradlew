@@ -1,0 +1,21 @@
+#!/bin/sh
+# Small bootstrap launcher for this starter. It downloads the pinned Gradle distribution once.
+set -eu
+APP_HOME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+GRADLE_VERSION=8.9
+USER_GRADLE_HOME=${GRADLE_USER_HOME:-"$HOME/.gradle"}
+DIST_ROOT="$USER_GRADLE_HOME/mutual-khata-distributions"
+GRADLE_DIR="$DIST_ROOT/gradle-$GRADLE_VERSION"
+if [ ! -x "$GRADLE_DIR/bin/gradle" ]; then
+  mkdir -p "$DIST_ROOT"
+  ZIP="$DIST_ROOT/gradle-$GRADLE_VERSION-bin.zip"
+  echo "Downloading Gradle $GRADLE_VERSION for the first build..."
+  if ! command -v curl >/dev/null 2>&1 || ! command -v unzip >/dev/null 2>&1; then
+    echo "This launcher needs curl and unzip. Install them or use Android Studio's Gradle setup." >&2
+    exit 1
+  fi
+  curl --fail --location --retry 2 "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip" --output "$ZIP"
+  unzip -q -o "$ZIP" -d "$DIST_ROOT"
+  rm -f "$ZIP"
+fi
+exec "$GRADLE_DIR/bin/gradle" --project-dir "$APP_HOME" "$@"
